@@ -34,9 +34,7 @@ Copy the `vars.yml.example` file to `var.yml` and update.
 Obtain credentials for aws using aws cli or another mechanism.
 
 ```
+cd ./aws
 terraform init
-```
-
-```
 terraform apply
 ```
