@@ -1,0 +1,44 @@
+# Splunk
+#History Control
+export HISTCONTROL=ignorespace
+export HISTTIMEFORMAT="%s "
+#Set SPLUNK_HOME
+for splunk_home in "/opt/splunk" "/opt/splunkforwarder";do
+  if [ -d ${splunk_home} ]; then
+    SPLUNK_HOME=${splunk_home}
+  fi
+done
+test -z ${SPLUNK_HOME} && echo "WARNING: SPLUNK_HOME env variable undefined!"
+export SPLUNK_HOME
+#Add splunk to PATH
+export PATH="$SPLUNK_HOME/bin:$PATH"
+#Prompt String
+green='\[\033[1;32m\]'
+bold='\[\033[1m\]'
+nc='\[\033[0m\]'
+if [[ "$SPLUNK_HOME" =~ "splunkforwarder" ]]; then
+  PS1="[\`date\`] [\u@\h \w]\n${bold}splunkfwd${green}>${nc} "
+else
+  PS1="[\`date\`] [\u@\h \w]\n${bold}splunk${green}>${nc} "
+fi
+# Helpful Alias
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+
+# For Fun
+echo
+echo
+cat << 'EOF'
+
+███████╗██████╗ ██╗     ██╗   ██╗███╗   ██╗██╗  ██╗    ██╗   ██╗███████╗    ██╗
+██╔════╝██╔══██╗██║     ██║   ██║████╗  ██║██║ ██╔╝    ██║   ██║██╔════╝    ╚██╗
+███████╗██████╔╝██║     ██║   ██║██╔██╗ ██║█████╔╝     ██║   ██║█████╗       ╚██╗
+╚════██║██╔═══╝ ██║     ██║   ██║██║╚██╗██║██╔═██╗     ██║   ██║██╔══╝       ██╔╝
+███████║██║     ███████╗╚██████╔╝██║ ╚████║██║  ██╗    ╚██████╔╝██║         ██╔╝
+╚══════╝╚═╝     ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝     ╚═════╝ ╚═╝         ╚═╝
+EOF
+splunk_version="$(${SPLUNK_HOME}/bin/splunk version | tail -1)"
+printf "\e[1;32m%60s\e[0m\n" "$splunk_version"
+echo
+echo

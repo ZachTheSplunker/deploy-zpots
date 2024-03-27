@@ -1,0 +1,24 @@
+---
+- name: Updating Ubuntu
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+    autoremove: true
+    autoclean: true
+    clean: true
+    upgrade: "full"
+
+- name: Check reboot
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+    get_checksum: false
+  register: reboot_required_file
+
+- name: Rebooting Server
+  ansible.builtin.reboot:
+    connect_timeout: 5
+    reboot_timeout: 600
+      # pre_reboot_delay: 100
+    post_reboot_delay: 10
+    test_command: uptime
+  when: reboot_required_file.stat.exists

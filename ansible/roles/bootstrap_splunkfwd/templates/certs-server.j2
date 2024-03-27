@@ -1,0 +1,17 @@
+[deployment]
+pass4SymmKey = {{ deploymentclinet_pass4symmkey }}
+
+[sslConfig]
+enableSplunkdSSL = {{ enableSplunkdSSL }}
+sslVersions = tls1.2
+serverCert = $SPLUNK_HOME/etc/apps/{{ app_prefix }}_all_certs/tls/fwd.pem
+sslRootCAPath = $SPLUNK_HOME/etc/apps/{{ app_prefix }}_all_certs/tls/ca.pem
+requireClientCert = {{ requireClientCert }}
+cliVerifyServerName = {{ cliVerifyServerName }}
+sslVerifyServerCert = {{ sslVerifyServerCert }}
+sslVerifyServerName = {{ sslVerifyServerName }}
+sslCommonNameToCheck = {{ sslCommonNameToCheck }}
+sslAltNameToCheck = {{ sslAltNameToCheck }}
+
+[kvstore]
+disabled = true

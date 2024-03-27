@@ -1,0 +1,159 @@
+---
+- name: Install dependencies - VIM
+  ansible.builtin.apt:
+    name:
+      - git
+      - vim
+      - curl
+    state: latest
+  when: ansible_facts['distribution'] == "Ubuntu" or ansible_facts['distribution'] == "Debian"
+
+- name: Install dependencies
+  ansible.builtin.dnf:
+    name:
+      - git
+      - vim
+      - curl
+    state: latest
+  when: ansible_facts['distribution'] == "CentOS" or ansible_facts['distribution'] == "AlmaLinux"
+
+- name: Check for existing VIM
+  ansible.builtin.stat:
+    path: /etc/vim/autoload/plug.vim
+    get_checksum: false
+  register: vim_exists
+
+- name: Install VIM Plug
+  ansible.builtin.shell:
+    cmd: curl -fLo /etc/vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+    creates: /etc/vim/autoload/plug.vim
+
+- name: Add VIM Plug configs
+  ansible.builtin.blockinfile:
+    path: /etc/vim/vimrc.plug
+    create: true
+    block: |
+      call plug#begin('/etc/vim/plugged')
+      " Fugitive Vim Github Wrapper
+      Plug 'tpope/vim-fugitive'
+      " Splunk
+      Plug 'yorokobi/vim-splunk'
+      " Caddy
+      Plug 'isobit/vim-caddyfile'
+      " color themes
+      Plug 'tomasr/molokai'
+      Plug 'gosukiwi/vim-atom-dark'
+      call plug#end()
+    marker: "\" {mark} ANSIBLE MANAGED BLOCK"
+
+- name: Set Vim path
+  ansible.builtin.set_fact:
+    vim_path: "/etc/vimrc.local"
+  when: ansible_facts['distribution'] == "CentOS" or ansible_facts['distribution'] == "AlmaLinux"
+
+- name: Set Vim path
+  ansible.builtin.set_fact:
+    vim_path: "/etc/vim/vimrc.local"
+  when: ansible_facts['distribution'] == "Ubuntu" or ansible_facts['distribution'] == "Debian"
+
+- name: Add Global VIM Config
+  ansible.builtin.blockinfile:
+    path: "{{ vim_path }}"
+    marker: "\" {mark} ANSIBLE MANAGED BLOCK"
+    create: true
+    block: |
+      " source: https://www.linode.com/docs/guides/introduction-to-vim-customization/
+      let mapleader = ","
+      inoremap jk <Esc>
+      set viminfo='100,<9999,s100
+      filetype off
+      " Background
+      " set bg=light
+      set bg=dark
+      " Status bar
+      set laststatus=2
+      " set statusline=%F%m%r%h%w\ %{strftime('%c')}
+      " set statusline=%{strftime('%c')}
+      set statusline=%F%m%r%h%w%<\ %=%{strftime('%c')}
+      " Highlights search
+      set hlsearch
+      set matchpairs+=<:>
+      " incremental search
+      set incsearch
+      " sets tabs
+      set tabstop=2
+      set softtabstop=2
+      set shiftwidth=2
+      " converts tabs to spaces
+      set expandtab
+      set autoindent
+      set noshiftround
+      set fileformat=unix
+      set list
+      set listchars=tab:›\ ,trail:•,extends:#,nbsp:.
+      " Misc
+      set nocompatible
+      syntax on
+      set encoding=utf-8
+      set number relativenumber
+      " ctrl+n to activate autocomplete
+      set wildmode=longest,list,full
+      " delete trailing whitespace
+      autocmd BufWritePre * %s/\s\+$//e
+      set wrap
+      set showcmd
+      set showmatch
+      set showmode
+      set ignorecase
+      set smartcase
+      set modelines=0
+      " set 5 lines above/below the cursor when scrolling
+      set scrolloff=5
+      " fixes common backspace problems
+      "set backspace=indent,eol,start
+      " speed up scrolling
+      set ttyfast
+      " set cursor
+      let &t_SI = "\e[6 q"
+      let &t_EI = "\e[2 q"
+      " set mouse=a
+      " multi windows
+      set splitbelow splitright
+      map <C-h> <C-w>h
+      map <C-j> <C-w>j
+      map <C-k> <C-w>k
+      map <C-l> <C-w>l
+      " Misc remaps
+      " global replace
+      nnoremap S :%s//g<Left><Left>
+      " New tab
+      nnoremap <silent> <C-t> :tabnew<CR>
+      " Map the <Space> key to toggle a selected fold opened/closed.
+      nnoremap <silent> <Space> @=(foldlevel('.')?'za':"\<Space>")<CR>
+      vnoremap <Space> zf
+      " Automatically save and load folds
+      autocmd BufWinLeave *.* mkview
+      autocmd BufWinEnter *.* silent loadview"
+      filetype plugin indent on
+      autocmd FileType * setlocal formatoptions-=c formatoptions-=r formatoptions-=o
+      set runtimepath+=/etc/vim
+      " Plugins
+      if filereadable(expand("/etc/vim/vimrc.plug"))
+        source /etc/vim/vimrc.plug
+      endif
+
+- name: Set Permissions
+  ansible.builtin.command:
+    cmd: chmod 755 /etc/vim/autoload /etc/vim
+
+- name: PlugInstall
+  ansible.builtin.command:
+    cmd: sudo vim +PlugInstall +qa
+
+- name: Add Global VIM Config
+  ansible.builtin.blockinfile:
+    path: "{{ vim_path }}"
+    marker: "\" {mark} ANSIBLE Colors MANAGED BLOCK"
+    block: |
+      colorscheme atom-dark-256
+      " colorscheme molokai

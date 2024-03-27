@@ -1,0 +1,31 @@
+---
+# Copy this file to "vars.yml" and update the following values
+
+# URL to download UF .deb package (MUST to be .deb package)
+uf_download_url: "https://download.splunk.com/products/universalforwarder/releases/9.1.2/linux/splunkforwarder-9.1.2-b6b9c8185839-linux-2.6-amd64.deb"
+
+# MD5 Checksum for UF file
+uf_download_checksum: "md5:d8166a23b7a1690907a856c189110c13"
+
+# Prefix for splunk app packages (zts_remote_deploymentclient where "zts" is the prefix)
+app_prefix: "zts"
+
+# Use HASHED_PASSWORD for a more secure installation. To hash a clear-text password,
+# use the 'splunk hash-passwd' command then copy the output to this file.
+# Reference: https://docs.splunk.com/Documentation/Splunk/latest/Admin/User-seedconf
+splunk_password: "hashed_password"
+
+# Splunk Deploymentclient password (can leave as changme if not in use)
+deploymentclinet_pass4symmkey = "changeme"
+
+# Deploymentclient "targetUri" field in deploymentclient.conf
+deploymentserver_uri: "deployment_server:8089"
+
+# SSL Settings (MUST provide valid forwarder and CA certificates (if enable SplunkdSSL=true) to ./roles/bootstrap_splunkfwd/files --> create ca.pem and fwd.pem)
+enableSplunkdSSL: "true"
+requireClientCert: "true"
+cliVerifyServerName: "true"
+sslVerifyServerCert: "true"
+sslVerifyServerName: "true"
+sslCommonNameToCheck: "idx.yourdomain.com, splunk.yourdomain.com"
+sslAltNameToCheck: "idx, splunk"

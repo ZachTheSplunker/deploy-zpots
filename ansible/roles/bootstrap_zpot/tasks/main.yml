@@ -1,0 +1,6 @@
+---
+- name: Install Zpot
+  ansible.builtin.shell: |
+    /root/tpot/iso/installer/install.sh --type=auto --conf=/root/tpot.conf && rm -f /root/tpot.conf && shutdown -r
+  args:
+    executable: /bin/bash

@@ -1,0 +1,12 @@
+---
+- name: Update Linux
+  import_tasks: apt.yml
+
+- name: Install vim
+  import_tasks: vim.yml
+
+- name: Install iterm options
+  import_tasks: iterm.yml
+
+- name: Install osquery
+  import_tasks: osquery.yml 

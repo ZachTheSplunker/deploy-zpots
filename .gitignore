@@ -1,0 +1,6 @@
+vars.yml
+ca.pem
+fwd.pem
+.terraform*
+terraform.*
+.DS_Store

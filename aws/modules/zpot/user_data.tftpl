@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+sudo -i
+apt update
+apt -y install git
+cat << 'ZPOT' > /root/tpot.conf
+# tpot configuration file
+myCONF_TPOT_FLAVOR='${tpot_flavor}'
+myCONF_WEB_USER='${web_user}'
+myCONF_WEB_PW='${web_password}'
+ZPOT
+git clone https://github.com/telekom-security/tpotce /root/tpot
+# moved to ansible
+# /root/tpot/iso/installer/install.sh --type=auto --conf=/root/tpot.conf
+# rm -f /root/tpot.conf
+# reboot
+EOF

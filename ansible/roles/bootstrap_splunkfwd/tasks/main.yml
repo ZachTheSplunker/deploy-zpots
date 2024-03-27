@@ -1,0 +1,150 @@
+---
+- name: Install dependencies
+  ansible.builtin.apt:
+    name:
+      - sysstat
+    state: latest
+
+- name: Download Splunk UF
+  ansible.builtin.get_url:
+    url: "{{ uf_download_url }}"
+    dest: /tmp/splunk-uf.deb
+    checksum: "{{ uf_download_checksum }}"
+
+- name: Install Splunk UF
+  ansible.builtin.apt:
+    deb: /tmp/splunk-uf.deb
+
+- name: Upload Splunk profile
+  ansible.builtin.copy:
+    src: splunk-profile
+    dest: /opt/splunkforwarder/.splunk-profile
+    owner: splunkfwd
+    group: splunkfwd
+
+- name: Add profile files to Splunk
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /opt/splunkforwarder
+    owner: splunkfwd
+    group: splunkfwd
+    remote_src: true
+  loop:
+    - /etc/skel/.bashrc
+    - /etc/skel/.bash_logout
+    - /etc/skel/.profile
+
+- name: Add Splunk Profile to bashrc
+  ansible.builtin.lineinfile:
+    path: /opt/splunkforwarder/.bashrc
+    state: present
+    line: '. ~/.splunk-profile'
+
+- name: Deployment Client - create base dir
+  ansible.builtin.file:
+    path: "/opt/splunkforwarder/etc/apps/{{ app_prefix }}_remote_deploymentclient/{{ item }}"
+    state: directory
+    owner: splunkfwd
+    group: splunkfwd
+    mode: "0750"
+  loop:
+    - local
+    - metadata
+
+- name: Deployment Client - server.conf
+  ansible.builtin.template:
+    src: dc-server.j2
+    dest: "/opt/splunkforwarder/etc/apps/{{ app_prefix }}_remote_deploymentclient/local/server.conf"
+    owner: splunkfwd
+    group: splunkfwd
+
+- name: Deployment Client - server.conf
+  ansible.builtin.template:
+    src: deploymentclient.j2
+    dest: "/opt/splunkforwarder/etc/apps/{{ app_prefix }}_remote_deploymentclient/local/deploymentclient.conf"
+    owner: splunkfwd
+    group: splunkfwd
+
+- name: Splunk Certificate - create base dir
+  ansible.builtin.file:
+    path: "/opt/splunkforwarder/etc/apps/{{ app_prefix }}_all_certs/{{ item }}"
+    state: directory
+    owner: splunkfwd
+    group: splunkfwd
+    mode: "0750"
+  loop:
+    - local
+    - metadata
+    - tls
+
+- name: Splunk Certificate - tls files
+  ansible.builtin.copy:
+    src: "{{ item }}.pem"
+    dest: "/opt/splunkforwarder/etc/apps/{{ app_prefix }}_all_certs/tls/{{ item }}.pem"
+    owner: splunkfwd
+    group: splunkfwd
+  loop:
+    - ca
+    - fwd
+  when: enableSplunkdSSL == "true"
+
+- name: Splunk Certificate - server.conf
+  ansible.builtin.template:
+    src: certs-server.j2
+    dest: "/opt/splunkforwarder/etc/apps/{{ app_prefix }}_all_certs/local/server.conf"
+    owner: splunkfwd
+    group: splunkfwd
+
+- name: App Package - add local.meta
+  ansible.builtin.copy:
+    src: local.meta
+    dest: "/opt/splunkforwarder/etc/apps/{{ app_prefix }}_{{ item }}/metadata/local.meta"
+    owner: splunkfwd
+    group: splunkfwd
+  loop:
+    - remote_deploymentclient
+    - all_certs
+
+- name: App Package - add app.conf
+  ansible.builtin.copy:
+    src: app.conf
+    dest: "/opt/splunkforwarder/etc/apps/{{ app_prefix }}_{{ item }}/local/app.conf"
+    owner: splunkfwd
+    group: splunkfwd
+  loop:
+    - remote_deploymentclient
+    - all_certs
+
+- name: Add Splunk Admin Password
+  ansible.builtin.template:
+    src: splunk-seed.j2
+    dest: /opt/splunkforwarder/etc/system/local/user-seed.conf
+    owner: splunkfwd
+    group: splunkfwd
+
+- name: Enable Splunk boot-start
+  ansible.builtin.command: /opt/splunkforwarder/bin/splunk enable boot-start -systemd-managed 1 -user splunkfwd -group splunkfwd --accept-license --answer-yes --no-prompt
+
+- name: Start Splunk
+  ansible.builtin.systemd:
+    state: started
+    name: SplunkForwarder
+
+- name: Wait for Splunk
+  ansible.builtin.pause:
+    seconds: 30
+
+- name: Update SSL password
+  ansible.builtin.lineinfile:
+    path: /opt/splunkforwarder/etc/system/local/server.conf
+    regexp: '^sslPassword'
+    line: sslPassword =
+
+- name: Wait for previous command
+  ansible.builtin.pause:
+    seconds: 2
+
+- name: Restart Splunk
+  ansible.builtin.systemd:
+    state: restarted
+    name: SplunkForwarder
